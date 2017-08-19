@@ -158,7 +158,7 @@ def kalman_filter(x,P,ss):
 	print("Predict: ",x,P)
 	[x, P] = measure(x,P,ss)
 	print("Update: ",x,P)
-	return x,P
+	return [x,P]
 
 ############################################
 ### use the code below to test your filter!
@@ -174,16 +174,25 @@ I = matrix([[1., 0.], [0., 1.]]) # identity matrix
 
 def call_thread_filter():
 	ss = a.get_battery().BatteryLifePercent
-	x = matrix([[b.BatteryLifePercent], [0.]]) # initial state (location and velocity)
+	x = matrix([[ss], [0.]]) # initial state (location and velocity)
 	P = matrix([[1000., 0.], [0., 1000.]]) # initial uncertainty
 	while ss <= 99:
-		print('Next in '+str(dt)+'s')
-		x,P = kalman_filter(x,P,ss)
+		print(str(ss)+' Waiting')
+		[x,P] = kalman_filter(x,P,ss)
 		k = 'NaN'
+		msg = 'NaN'
 		if x.value[1][0] != 0.0:
-			k = str((100.0 - x.value[0][0])/x.value[1][0]/60.0)
-		print(k+' min Remaining')
+			print(a.get_battery().BatteryFlag)
+			if a.get_battery().BatteryFlag == 9:
+				m = (100.0 - x.value[0][0])
+				msg = 'charge'
+			else:
+				m = (x.value[0][0] - 0.0)
+				msg = 'discharge'
+			k = str(m/x.value[1][0]/60.0)
+		print(k+' min Remaining to '+msg)
 		time.sleep(dt)
 		ss = a.get_battery().BatteryLifePercent
 if __name__ == '__main__':
 	call_thread_filter()
+		
